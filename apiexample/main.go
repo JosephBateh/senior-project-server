@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"./rest"
 )
 
 func main() {
-	fmt.Println("Hello World")
+	rest.Start()
 }
