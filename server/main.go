@@ -1,8 +1,6 @@
 package main
 
-import (
-	"./authentication"
-)
+import "github.com/josephbateh/senior-project-server/authentication"
 
 func main() {
 	authentication.Authenticate()
