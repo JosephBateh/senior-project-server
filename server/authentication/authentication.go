@@ -5,7 +5,7 @@
 //       - Use "http://localhost:8080/callback" as the redirect URI
 //  2. Set the SPOTIFY_ID environment variable to the client ID you got in step 1.
 //  3. Set the SPOTIFY_SECRET environment variable to the client secret from step 1.
-package main
+package authentication
 
 import (
 	"fmt"
@@ -27,7 +27,8 @@ var (
 	state = "abc123"
 )
 
-func main() {
+func Authenticate() {
+	// Load environment variables before anything else.
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
