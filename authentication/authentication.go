@@ -22,12 +22,13 @@ import (
 const redirectURI = "http://localhost:8080/callback"
 
 var (
-	auth  = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadPrivate)
+	auth  spotify.Authenticator
 	ch    = make(chan *spotify.Client)
 	state = "abc123"
 )
 
-func Authenticate() {
+// Start starts the process of listening for authentication requests
+func Start() {
 	// Load environment variables before anything else.
 	err := godotenv.Load()
 	if err != nil {
@@ -35,16 +36,13 @@ func Authenticate() {
 	}
 
 	auth = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadPrivate)
+	url := auth.AuthURL(state)
+	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
 	// first start an HTTP server
 	http.HandleFunc("/callback", completeAuth)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Got request for:", r.URL.String())
-	})
+	http.HandleFunc("/", startAuth)
 	go http.ListenAndServe(":8080", nil)
-
-	url := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
 
 	// wait for auth to complete
 	client := <-ch
@@ -55,6 +53,10 @@ func Authenticate() {
 		log.Fatal(err)
 	}
 	fmt.Println("You are logged in as:", user.ID)
+}
+
+func startAuth(w http.ResponseWriter, r *http.Request) {
+	log.Println("Got request for:", r.URL.String())
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
