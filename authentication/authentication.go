@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -43,17 +44,18 @@ func listen() {
 
 func login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Login...")
-	url := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
-	// wait for auth to complete
-	client := <-ch
+	loginURL := auth.AuthURL(state)
+	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", loginURL)
 
-	// use the client to make calls that require authorization
-	user, err := client.CurrentUser()
+	type res struct {
+		Address []byte
+	}
+	u, err := json.Marshal(loginURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("You are logged in as:", user.ID)
+	response := res{u}
+	getRequest(w, r, response)
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +71,33 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
 	fmt.Fprintf(w, "Login Completed!")
-	ch <- &client
+
+	// use the client to make calls that require authorization
+	user, err := client.CurrentUser()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("You are logged in as:", user.ID)
+}
+
+func getRequest(writer http.ResponseWriter, response *http.Request, v interface{}) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
+	writer.Header().Set("Content-Type", "application/json")
+
+	// Check if the method is a get
+	if response.Method != http.MethodGet {
+		http.Error(writer, http.StatusText(405), 405)
+		fmt.Println(writer)
+		return
+	}
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		http.Error(writer, http.StatusText(500), 500)
+	}
+
+	writer.Write(b)
 }
 
 func loadEnv() {
