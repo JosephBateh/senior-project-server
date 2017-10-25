@@ -48,13 +48,9 @@ func login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", loginURL)
 
 	type res struct {
-		Address []byte
+		Address string
 	}
-	u, err := json.Marshal(loginURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	response := res{u}
+	response := res{loginURL}
 	getRequest(w, r, response)
 }
 
@@ -92,12 +88,16 @@ func getRequest(writer http.ResponseWriter, response *http.Request, v interface{
 		return
 	}
 
-	b, err := json.Marshal(v)
-	if err != nil {
-		http.Error(writer, http.StatusText(500), 500)
-	}
+	enc := json.NewEncoder(writer)
+	enc.SetEscapeHTML(false)
+	enc.Encode(v)
 
-	writer.Write(b)
+	// b, err := json.Marshal(v)
+	// if err != nil {
+	// 	http.Error(writer, http.StatusText(500), 500)
+	// }
+
+	// writer.Write(b)
 }
 
 func loadEnv() {
