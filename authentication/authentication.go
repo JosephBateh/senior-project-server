@@ -27,7 +27,7 @@ func Start() {
 
 	waitGroup.Add(1)
 	go listen()
-	fmt.Println("Searver listening...")
+	fmt.Println("Server listening...")
 	waitGroup.Wait()
 
 }
@@ -43,9 +43,7 @@ func listen() {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Login...")
 	loginURL := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", loginURL)
 
 	type res struct {
 		Address string
@@ -66,14 +64,14 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	}
 	// use the token to get an authenticated client
 	client := auth.NewClient(tok)
-	fmt.Fprintf(w, "Login Completed!")
+	fmt.Fprintf(w, "Login Completed! You may now close this tab.")
 
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("You are logged in as:", user.ID)
+	fmt.Println("User", user.ID, "logged in")
 }
 
 func getRequest(writer http.ResponseWriter, response *http.Request, v interface{}) {
