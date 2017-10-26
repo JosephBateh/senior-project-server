@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/joho/godotenv"
+	"github.com/josephbateh/senior-project-server/database"
 	"github.com/zmb3/spotify"
 )
 
@@ -17,7 +18,7 @@ var (
 	auth      spotify.Authenticator
 	waitGroup sync.WaitGroup
 	ch        = make(chan *spotify.Client)
-	state     = "abc123"
+	state     = "u4KEsvUyfQ9O"
 )
 
 // Start starts the process of listening for authentication requests
@@ -25,11 +26,12 @@ func Start() {
 
 	loadEnv()
 
+	database.Connect()
+
 	waitGroup.Add(1)
 	go listen()
 	fmt.Println("Server listening...")
 	waitGroup.Wait()
-
 }
 
 func listen() {
@@ -68,6 +70,8 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser()
+	database.CreateUser(user.ID, "string")
+	database.Disconnect()
 	if err != nil {
 		log.Fatal(err)
 	}
