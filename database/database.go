@@ -5,19 +5,32 @@ import (
 	"log"
 	"os"
 
+	"golang.org/x/oauth2"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 var session *mgo.Session
 
-// CreateUser in users collection
-func CreateUser(userID string, userAuth string) {
+// AddUser in users collection
+func AddUser(userID string, userAuth oauth2.Token) {
 	c := session.DB(os.Getenv("MLAB_DB")).C("users")
 	err := c.Insert(&user{userID, userAuth})
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// GetUser returns the user with the given userID
+func GetUser(userID string) {
+	c := session.DB(os.Getenv("MLAB_DB")).C("users")
+	// Query One
+	result := user{}
+	err := c.Find(bson.M{"userid": userID}).One(&result)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("User", result)
 }
 
 // Connect to the database
