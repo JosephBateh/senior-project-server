@@ -15,22 +15,19 @@ var session *mgo.Session
 // AddUser in users collection
 func AddUser(userID string, userAuth oauth2.Token) {
 	c := session.DB(os.Getenv("MLAB_DB")).C("users")
-	err := c.Insert(&user{userID, userAuth})
+	err := c.Insert(&User{userID, userAuth})
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 // GetUser returns the user with the given userID
-func GetUser(userID string) {
+func GetUser(userID string) (User, error) {
 	c := session.DB(os.Getenv("MLAB_DB")).C("users")
 	// Query One
-	result := user{}
+	result := User{}
 	err := c.Find(bson.M{"userid": userID}).One(&result)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("User", result)
+	return result, err
 }
 
 // Connect to the database

@@ -7,7 +7,8 @@ type test struct {
 	Phone string
 }
 
-type user struct {
+// User stores minimal user information
+type User struct {
 	UserID    string
 	UserToken oauth2.Token
 }

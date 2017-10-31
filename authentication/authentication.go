@@ -71,8 +71,14 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 	// use the client to make calls that require authorization
 	user, err := client.CurrentUser()
 	clientToken, err := client.Token()
-	database.AddUser(user.ID, *clientToken)
-	database.GetUser(user.ID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = database.GetUser(user.ID)
+	if err == nil {
+		database.AddUser(user.ID, *clientToken)
+	}
+
 	database.Disconnect()
 	if err != nil {
 		log.Fatal(err)
