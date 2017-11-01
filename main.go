@@ -3,10 +3,10 @@ package main
 import (
 	"runtime"
 
-	"github.com/josephbateh/senior-project-server/authentication"
+	"github.com/josephbateh/senior-project-server/server"
 )
 
 func main() {
 	runtime.GOMAXPROCS(4)
-	authentication.Start()
+	server.Start()
 }
