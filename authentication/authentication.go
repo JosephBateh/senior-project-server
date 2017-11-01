@@ -8,7 +8,6 @@ import (
 	"os"
 	"sync"
 
-	"github.com/joho/godotenv"
 	"github.com/josephbateh/senior-project-server/database"
 	"github.com/zmb3/spotify"
 )
@@ -24,7 +23,6 @@ var (
 // Listen for authentication requests
 func Listen() {
 
-	loadEnv()
 	redirectURI = os.Getenv("REDIRECT_URI")
 
 	database.Connect()
@@ -32,6 +30,7 @@ func Listen() {
 	waitGroup.Add(1)
 	go start()
 	waitGroup.Wait()
+	database.Disconnect()
 }
 
 // GetAuthenticator returns an authenticator with the default scopes
@@ -116,11 +115,4 @@ func getRequest(writer http.ResponseWriter, response *http.Request, v interface{
 	// }
 
 	// writer.Write(b)
-}
-
-func loadEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 }
