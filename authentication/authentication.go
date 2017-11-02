@@ -8,12 +8,13 @@ import (
 	"os"
 	"sync"
 
+	"golang.org/x/oauth2"
+
 	"github.com/josephbateh/senior-project-server/database"
 	"github.com/zmb3/spotify"
 )
 
 var (
-	auth        spotify.Authenticator
 	waitGroup   sync.WaitGroup
 	ch          = make(chan *spotify.Client)
 	state       = "u4KEsvUyfQ9O"
@@ -28,15 +29,18 @@ func Listen() {
 	waitGroup.Wait()
 }
 
-// GetAuthenticator returns an authenticator with the default scopes
-func GetAuthenticator() spotify.Authenticator {
+func getAuthenticator() spotify.Authenticator {
 	authenticator := spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadPrivate, spotify.ScopePlaylistReadPrivate, spotify.ScopePlaylistModifyPublic, spotify.ScopePlaylistModifyPrivate, spotify.ScopePlaylistReadCollaborative, spotify.ScopeUserLibraryModify, spotify.ScopeUserLibraryRead, spotify.ScopeUserReadPrivate, spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserReadPlaybackState, spotify.ScopeUserModifyPlaybackState, spotify.ScopeUserReadRecentlyPlayed, spotify.ScopeUserTopRead)
 	return authenticator
 }
 
-func start() {
-	auth = GetAuthenticator()
+// GetClient returns a client for making API calls
+func GetClient(token oauth2.Token) spotify.Client {
+	auth := getAuthenticator()
+	return auth.NewClient(&token)
+}
 
+func start() {
 	http.HandleFunc("/callback", userLogin)
 	http.HandleFunc("/", login)
 
@@ -45,6 +49,7 @@ func start() {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
+	auth := getAuthenticator()
 	loginURL := auth.AuthURL(state)
 
 	type res struct {
@@ -55,6 +60,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func userLogin(w http.ResponseWriter, r *http.Request) {
+	auth := getAuthenticator()
 	// Get token
 	tok, err := auth.Token(state, r)
 	if err != nil {
