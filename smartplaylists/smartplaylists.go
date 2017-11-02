@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/zmb3/spotify"
+
 	"github.com/josephbateh/senior-project-server/authentication"
 
 	"github.com/josephbateh/senior-project-server/database"
@@ -38,23 +40,35 @@ func firstPlaylist() {
 	playlists := playlistsPage.Playlists
 
 	// Get songs from playlist 1
-	playlistOneTracks, err := client.GetPlaylistTracks(user.UserID, playlists[1].ID)
+	playlistOneTracks, err := client.GetPlaylistTracks(user.UserID, playlists[2].ID)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(playlistOneTracks.Tracks[0].Track.ID)
+	playlistOneTrackObjects := playlistOneTracks.Tracks
+	fmt.Println(playlistOneTrackObjects[0].Track.ID)
 
 	// Get songs from playlist 2
-	playlistTwoTracks, err := client.GetPlaylistTracks(user.UserID, playlists[2].ID)
+	playlistTwoTracks, err := client.GetPlaylistTracks(user.UserID, playlists[3].ID)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(playlistTwoTracks.Tracks[0].Track.ID)
+	playlistTwoTrackObjects := playlistTwoTracks.Tracks
+	fmt.Println(playlistTwoTrackObjects[0].Track.ID)
 
-	// Check if playlist exists
+	var tracksToBeAdded []spotify.ID
+	// Create array that assigns to tracksToBeAdded
+	for _, object := range playlistOneTrackObjects {
+		tracksToBeAdded = append(tracksToBeAdded, object.Track.ID)
+	}
+	for _, object := range playlistTwoTrackObjects {
+		tracksToBeAdded = append(tracksToBeAdded, object.Track.ID)
+	}
 
 	// Put songs from 1 and 2 into playlist 3
-	client.CreatePlaylistForUser(user.UserID, "Smart Playlist", true)
+	_, err = client.AddTracksToPlaylist(user.UserID, playlists[0].ID, tracksToBeAdded...)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Disconnect for DB
 	database.Disconnect()
