@@ -1,7 +1,6 @@
 package smartplaylists
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/zmb3/spotify"
@@ -19,7 +18,6 @@ func Test() {
 func firstPlaylist() {
 	// Get user ID
 	userID := "jbspotifytest01"
-	database.Connect()
 
 	// Get user from DB
 	user, err := database.GetUser(userID)
@@ -45,7 +43,6 @@ func firstPlaylist() {
 		log.Fatal(err)
 	}
 	playlistOneTrackObjects := playlistOneTracks.Tracks
-	fmt.Println(playlistOneTrackObjects[0].Track.ID)
 
 	// Get songs from playlist 2
 	playlistTwoTracks, err := client.GetPlaylistTracks(user.UserID, playlists[3].ID)
@@ -53,7 +50,6 @@ func firstPlaylist() {
 		log.Fatal(err)
 	}
 	playlistTwoTrackObjects := playlistTwoTracks.Tracks
-	fmt.Println(playlistTwoTrackObjects[0].Track.ID)
 
 	var tracksToBeAdded []spotify.ID
 	// Create array that assigns to tracksToBeAdded
@@ -69,7 +65,4 @@ func firstPlaylist() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Disconnect for DB
-	database.Disconnect()
 }

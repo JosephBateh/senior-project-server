@@ -22,15 +22,10 @@ var (
 
 // Listen for authentication requests
 func Listen() {
-
 	redirectURI = os.Getenv("REDIRECT_URI")
-
-	database.Connect()
-
 	waitGroup.Add(1)
 	go start()
 	waitGroup.Wait()
-	database.Disconnect()
 }
 
 // GetAuthenticator returns an authenticator with the default scopes
@@ -91,6 +86,7 @@ func userLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		database.AddUser(user.ID, *clientToken)
 	}
+	log.Println("User -", user.ID, "logged in.")
 }
 
 func getRequest(writer http.ResponseWriter, response *http.Request, v interface{}) {
