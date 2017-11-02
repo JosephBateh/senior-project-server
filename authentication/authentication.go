@@ -1,7 +1,6 @@
 package authentication
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,26 +10,22 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/josephbateh/senior-project-server/database"
+	"github.com/josephbateh/senior-project-server/rest"
 	"github.com/zmb3/spotify"
 )
 
 var (
-	waitGroup   sync.WaitGroup
-	ch          = make(chan *spotify.Client)
-	state       = "u4KEsvUyfQ9O"
-	redirectURI string
+	waitGroup sync.WaitGroup
+	ch        = make(chan *spotify.Client)
+	state     = "u4KEsvUyfQ9O"
 )
 
-// Listen for authentication requests
-func Listen() {
-	redirectURI = os.Getenv("REDIRECT_URI")
-	waitGroup.Add(1)
-	go start()
-	waitGroup.Wait()
+func redirectURI() string {
+	return os.Getenv("REDIRECT_URI")
 }
 
 func getAuthenticator() spotify.Authenticator {
-	authenticator := spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadPrivate, spotify.ScopePlaylistReadPrivate, spotify.ScopePlaylistModifyPublic, spotify.ScopePlaylistModifyPrivate, spotify.ScopePlaylistReadCollaborative, spotify.ScopeUserLibraryModify, spotify.ScopeUserLibraryRead, spotify.ScopeUserReadPrivate, spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserReadPlaybackState, spotify.ScopeUserModifyPlaybackState, spotify.ScopeUserReadRecentlyPlayed, spotify.ScopeUserTopRead)
+	authenticator := spotify.NewAuthenticator(redirectURI(), spotify.ScopeUserReadPrivate, spotify.ScopePlaylistReadPrivate, spotify.ScopePlaylistModifyPublic, spotify.ScopePlaylistModifyPrivate, spotify.ScopePlaylistReadCollaborative, spotify.ScopeUserLibraryModify, spotify.ScopeUserLibraryRead, spotify.ScopeUserReadPrivate, spotify.ScopeUserReadCurrentlyPlaying, spotify.ScopeUserReadPlaybackState, spotify.ScopeUserModifyPlaybackState, spotify.ScopeUserReadRecentlyPlayed, spotify.ScopeUserTopRead)
 	return authenticator
 }
 
@@ -40,15 +35,8 @@ func GetClient(token oauth2.Token) spotify.Client {
 	return auth.NewClient(&token)
 }
 
-func start() {
-	http.HandleFunc("/callback", userLogin)
-	http.HandleFunc("/", login)
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
-	waitGroup.Done()
-}
-
-func login(w http.ResponseWriter, r *http.Request) {
+// Login to the server
+func Login(w http.ResponseWriter, r *http.Request) {
 	auth := getAuthenticator()
 	loginURL := auth.AuthURL(state)
 
@@ -56,10 +44,11 @@ func login(w http.ResponseWriter, r *http.Request) {
 		Address string
 	}
 	response := res{loginURL}
-	getRequest(w, r, response)
+	rest.GetRequest(w, r, response)
 }
 
-func userLogin(w http.ResponseWriter, r *http.Request) {
+// Complete login to the server
+func Complete(w http.ResponseWriter, r *http.Request) {
 	auth := getAuthenticator()
 	// Get token
 	tok, err := auth.Token(state, r)
@@ -93,28 +82,4 @@ func userLogin(w http.ResponseWriter, r *http.Request) {
 		database.AddUser(user.ID, *clientToken)
 	}
 	log.Println("User -", user.ID, "logged in.")
-}
-
-func getRequest(writer http.ResponseWriter, response *http.Request, v interface{}) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
-	writer.Header().Set("Content-Type", "application/json")
-
-	// Check if the method is a get
-	if response.Method != http.MethodGet {
-		http.Error(writer, http.StatusText(405), 405)
-		fmt.Println(writer)
-		return
-	}
-
-	enc := json.NewEncoder(writer)
-	enc.SetEscapeHTML(false)
-	enc.Encode(v)
-
-	// b, err := json.Marshal(v)
-	// if err != nil {
-	// 	http.Error(writer, http.StatusText(500), 500)
-	// }
-
-	// writer.Write(b)
 }
