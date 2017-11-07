@@ -9,8 +9,7 @@ import (
 	db "github.com/josephbateh/senior-project-server/database"
 )
 
-// PlaylistFromOtherPlaylists creates a new playlist from the tracks in the provided playlist
-func PlaylistFromOtherPlaylists(userID string, name string, playlistIDs ...string) {
+func getUserClient(userID string) (db.User, spotify.Client, error) {
 	// Get user from the DB
 	user, err := db.GetUser(userID)
 	if err != nil {
@@ -19,7 +18,20 @@ func PlaylistFromOtherPlaylists(userID string, name string, playlistIDs ...strin
 
 	// Get client from user
 	client := authentication.GetClient(user.UserToken)
+	return user, client, err
+}
 
+// PlaylistMatchValue will return tracks that are in the provided playlist
+func PlaylistMatchValue(userID string, tracks []string, playlistID string) []string {
+	return tracks
+}
+
+// PlaylistFromOtherPlaylists creates a new playlist from the tracks in the provided playlist
+func PlaylistFromOtherPlaylists(userID string, name string, playlistIDs ...string) {
+	user, client, err := getUserClient(userID)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Get users playlists
 	playlistPage, err := client.GetPlaylistsForUser(user.UserID)
 	if err != nil {
