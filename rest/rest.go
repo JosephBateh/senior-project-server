@@ -22,29 +22,16 @@ func GetRequest(writer http.ResponseWriter, response *http.Request, v interface{
 	enc := json.NewEncoder(writer)
 	enc.SetEscapeHTML(false)
 	enc.Encode(v)
-
-	// b, err := json.Marshal(v)
-	// if err != nil {
-	// 	http.Error(writer, http.StatusText(500), 500)
-	// }
-
-	// writer.Write(b)
 }
 
 // PostRequest is used for an HTTP POST request
-func PostRequest(writer http.ResponseWriter, response *http.Request, v interface{}) {
-	writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	writer.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-	writer.Header().Set("Content-Type", "application/json")
+func PostRequest(response http.ResponseWriter, request *http.Request, v interface{}) {
+	response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	response.Header().Set("Access-Control-Allow-Origin", "*")
+	response.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+	response.Header().Set("Content-Type", "application/json")
 
-	enc := json.NewEncoder(writer)
+	enc := json.NewEncoder(response)
 	enc.SetEscapeHTML(false)
 	enc.Encode(v)
-	// // Check if the method is a post
-	// if response.Method != http.MethodPost {
-	// 	http.Error(writer, http.StatusText(405), 405)
-	// 	fmt.Println(writer)
-	// 	return
-	// }
 }
