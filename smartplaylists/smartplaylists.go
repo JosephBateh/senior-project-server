@@ -14,35 +14,20 @@ import (
 )
 
 type rule struct {
-	Attribute string
-	Match     string
-	Value     string
-}
-
-type ruleArray struct {
-	Rules []rule
+	Attribute string `json:"attribute"`
+	Match     bool   `json:"match"`
+	Value     string `json:"value"`
 }
 
 // Playlists is the function called for the smartplaylist endpoint
 func Playlists(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var ruleArray ruleArray
-	err := decoder.Decode(&ruleArray)
-	if err != nil {
-		log.Fatal(err)
-	}
+	var rule []rule
+	_ = decoder.Decode(&rule)
 	defer r.Body.Close()
 
-	fmt.Println(ruleArray.Rules)
-	// body, err := ioutil.ReadAll(r.Body)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// r.Body.Close()
-	// var ruleArray ruleArray
-	// err = json.Unmarshal(body, &ruleArray)
-	// fmt.Println("Attribute:", ruleArray.Rules.Attribute)
-	rest.PostRequest(w, r, ruleArray)
+	fmt.Println(rule)
+	rest.PostRequest(w, r, rule)
 }
 
 func getUserClient(userID string) (db.User, spotify.Client, error) {
