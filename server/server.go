@@ -20,9 +20,6 @@ func Start() {
 	go http.ListenAndServe(":8080", nil)
 	fmt.Println("Server listening")
 
-	// Test it
-	go smartplaylists.PlaylistFromOtherPlaylists("jbspotifytest01", "Smart Playlist", "53lV2g8Jn3cGfXtT6adA3i", "2vh7lBRsthuZMR93BrIGLX")
-
 	// Wait until go routines run
 	wg.Wait()
 }
@@ -30,5 +27,5 @@ func Start() {
 func setupRoutes() {
 	http.HandleFunc("/", authentication.Login)
 	http.HandleFunc("/callback", authentication.Complete)
-	//http.HandleFunc("/smartplaylist", smartplaylists.PlaylistFromOtherPlaylists)
+	http.HandleFunc("/smartplaylist", smartplaylists.Playlists)
 }

@@ -1,13 +1,49 @@
 package smartplaylists
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/zmb3/spotify"
 
 	"github.com/josephbateh/senior-project-server/authentication"
 	db "github.com/josephbateh/senior-project-server/database"
+	"github.com/josephbateh/senior-project-server/rest"
 )
+
+type rule struct {
+	Attribute string
+	Match     string
+	Value     string
+}
+
+type ruleArray struct {
+	Rules []rule
+}
+
+// Playlists is the function called for the smartplaylist endpoint
+func Playlists(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var ruleArray ruleArray
+	err := decoder.Decode(&ruleArray)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer r.Body.Close()
+
+	fmt.Println(ruleArray.Rules)
+	// body, err := ioutil.ReadAll(r.Body)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// r.Body.Close()
+	// var ruleArray ruleArray
+	// err = json.Unmarshal(body, &ruleArray)
+	// fmt.Println("Attribute:", ruleArray.Rules.Attribute)
+	rest.PostRequest(w, r, ruleArray)
+}
 
 func getUserClient(userID string) (db.User, spotify.Client, error) {
 	// Get user from the DB
