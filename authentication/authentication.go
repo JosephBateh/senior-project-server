@@ -82,4 +82,9 @@ func Complete(w http.ResponseWriter, r *http.Request) {
 		database.AddUser(user.ID, *clientToken)
 	}
 	log.Println("User -", user.ID, "logged in.")
+	type res struct {
+		Success string
+	}
+	response := res{"Success"}
+	rest.GetRequest(w, r, response)
 }

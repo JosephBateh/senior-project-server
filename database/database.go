@@ -13,6 +13,11 @@ import (
 
 var session *mgo.Session
 
+// UpdatePlaysForUser updates the number of times a user has played songs
+func UpdatePlaysForUser(users []User) {
+
+}
+
 // AddUser in users collection
 func AddUser(userID string, userAuth oauth2.Token) {
 	connect()
@@ -31,6 +36,17 @@ func GetUser(userID string) (User, error) {
 	// Query One
 	result := User{}
 	err := c.Find(bson.M{"userid": userID}).One(&result)
+	disconnect()
+	return result, err
+}
+
+// GetAllUsers returns all users in the database
+func GetAllUsers() ([]User, error) {
+	connect()
+	c := session.DB(os.Getenv("MLAB_DB")).C("users")
+	// Query One
+	result := []User{}
+	err := c.Find(bson.M{}).All(&result)
 	disconnect()
 	return result, err
 }

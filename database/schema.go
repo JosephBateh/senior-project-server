@@ -1,6 +1,7 @@
 package database
 
 import "golang.org/x/oauth2"
+import "time"
 
 // User stores minimal user information
 type User struct {
@@ -14,6 +15,13 @@ type SmartPlaylist struct {
 	Name  string `json:"name"`
 	User  string `json:"user"`
 	Rules []rule `json:"rules"`
+}
+
+// Play is a single instance of a song being played by a user
+type Play struct {
+	User string
+	Song string
+	Time time.Time
 }
 
 type rule struct {

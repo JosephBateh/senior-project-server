@@ -3,9 +3,11 @@ package server
 import (
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/josephbateh/senior-project-server/smartplaylists"
+	"github.com/josephbateh/senior-project-server/useractivity"
 
 	"github.com/josephbateh/senior-project-server/authentication"
 )
@@ -17,11 +19,18 @@ func Start() {
 	// Start the server
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go http.ListenAndServe(":8080", nil)
+	if os.Getenv("PORT") != "" {
+		go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	} else {
+		go http.ListenAndServe(":8080", nil)
+	}
 
 	// Start auto-updating playlists every N minutes
-	go smartplaylists.Start(5)
+	wg.Add(2)
+	go smartplaylists.Start(30)
+	go useractivity.Start(30)
 	log.Println("Server started")
+
 	// Wait until go routines run
 	wg.Wait()
 }
