@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/josephbateh/senior-project-server/smartplaylists"
@@ -18,7 +19,11 @@ func Start() {
 	// Start the server
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go http.ListenAndServe(":443", nil)
+	if os.Getenv("PRODUCTION") == "true" {
+		go http.ListenAndServe(":443", nil)
+	} else {
+		go http.ListenAndServe(":8080", nil)
+	}
 
 	// Start auto-updating playlists every N minutes
 	wg.Add(2)

@@ -9,7 +9,7 @@ import (
 // GetRequest is used for an HTTP GET request
 func GetRequest(writer http.ResponseWriter, response *http.Request, v interface{}) {
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	writer.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	writer.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
 	writer.Header().Set("Content-Type", "application/json")
 
 	// Check if the method is a get
