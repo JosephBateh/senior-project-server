@@ -2,6 +2,7 @@ package smartplaylists
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -56,15 +57,53 @@ func Playlists(response http.ResponseWriter, request *http.Request) {
 			userID = rule.User
 		}
 
+		// Check if playlist already exists
+		playlistID, err := getPlaylistIDFromName(userID, smartplaylist.Name)
+
+		// If playlist doesn't exist, create it
+		if err != nil {
+			playlistID = createNewPlaylist(userID, smartplaylist.Name)
+		}
+
 		// Clear playlist and add new tracks
-		updatePlaylist(userID, unionOfTracks(tracks...))
+		updatePlaylist(userID, playlistID, unionOfTracks(tracks...))
 	}
 
 	rest.PostRequest(response, request, smartplaylist)
 }
 
-func updatePlaylist(userID string, tracks []string) {
-	user, client, err := getUserClient("jbspotifytest01")
+func getPlaylistIDFromName(userID string, name string) (string, error) {
+	_, client, err := getUserClient(userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	simplePlaylistPage, err := client.GetPlaylistsForUser(userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	simplePlaylistArray := simplePlaylistPage.Playlists
+
+	var playlistID string
+
+	for _, playlist := range simplePlaylistArray {
+		playlistName := playlist.Name
+		if playlistName == name {
+			err = nil
+			return string(playlist.ID), err
+		}
+	}
+
+	err = errors.New("No playlist with that ID")
+
+	return playlistID, err
+}
+
+func updatePlaylist(userID string, playlistIDString string, tracks []string) {
+	playlistID := spotify.ID(playlistIDString)
+
+	user, client, err := getUserClient(userID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,14 +115,14 @@ func updatePlaylist(userID string, tracks []string) {
 	}
 
 	// Clear playlist and add tracks
-	tracksCurrentlyInPlaylist, _ := client.GetPlaylistTracks(user.UserID, spotify.ID("0EVAoDQ4B8Rsd2rtiE9AyO"))
+	tracksCurrentlyInPlaylist, _ := client.GetPlaylistTracks(user.UserID, playlistID)
 	var currentTrackIDs []spotify.ID
 	for _, object := range tracksCurrentlyInPlaylist.Tracks {
 		currentTrackIDs = append(currentTrackIDs, object.Track.ID)
 	}
 
-	client.RemoveTracksFromPlaylist(user.UserID, spotify.ID("0EVAoDQ4B8Rsd2rtiE9AyO"), currentTrackIDs...)
-	client.AddTracksToPlaylist(user.UserID, spotify.ID("0EVAoDQ4B8Rsd2rtiE9AyO"), trackIDs...)
+	client.RemoveTracksFromPlaylist(user.UserID, playlistID, currentTrackIDs...)
+	client.AddTracksToPlaylist(user.UserID, playlistID, trackIDs...)
 	log.Println("Playlist updated")
 }
 
@@ -134,4 +173,18 @@ func unionOfTracks(trackList ...[]string) []string {
 	}
 
 	return set.StringSlice(tracks)
+}
+
+func createNewPlaylist(userID string, name string) string {
+	_, client, err := getUserClient(userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	playlist, err := client.CreatePlaylistForUser(userID, name, false)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return string(playlist.ID)
 }
