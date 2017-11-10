@@ -22,7 +22,7 @@ func getUserClient(userID string) (db.User, spotify.Client, error) {
 	return user, client, err
 }
 
-func getTracksFromRules(smartplaylist smartplaylist) []string {
+func getTracksFromRules(smartplaylist db.SmartPlaylist) []string {
 	var trueMatch [][]string
 	var falseMatch [][]string
 
@@ -128,7 +128,6 @@ func updatePlaylist(userID string, playlistIDString string, tracks []string) {
 
 	client.RemoveTracksFromPlaylist(user.UserID, playlistID, currentTrackIDs...)
 	client.AddTracksToPlaylist(user.UserID, playlistID, trackIDs...)
-	log.Println("Playlist updated")
 }
 
 // PlaylistMatchValue will return tracks that are in the provided playlist

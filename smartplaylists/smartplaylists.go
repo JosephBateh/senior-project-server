@@ -6,24 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	db "github.com/josephbateh/senior-project-server/database"
 	"github.com/josephbateh/senior-project-server/rest"
 )
 
-type rule struct {
-	Attribute string `json:"attribute"`
-	Match     bool   `json:"match"`
-	Value     string `json:"value"`
-}
-
-type smartplaylist struct {
-	Name  string `json:"name"`
-	User  string `json:"user"`
-	Rules []rule `json:"rules"`
-}
-
 // Playlists is the function called for the smartplaylist endpoint
 func Playlists(response http.ResponseWriter, request *http.Request) {
-	var smartplaylist smartplaylist
+	var smartplaylist db.SmartPlaylist
 
 	// If statement guards against an OPTIONS request
 	if request.Method == http.MethodPost {
@@ -40,25 +29,24 @@ func Playlists(response http.ResponseWriter, request *http.Request) {
 			fmt.Println(err)
 		}
 
-		// Get the user ID
-		userID := smartplaylist.User
-
-		// Get the results of each rule
-		tracks := getTracksFromRules(smartplaylist)
-
-		// If playlist doesn't exist, create it
-		playlistID, err := getPlaylistIDFromName(userID, smartplaylist.Name)
-		if err != nil {
-			playlistID = createNewPlaylist(userID, smartplaylist.Name)
-		}
-
-		// Clear playlist and add new tracks
-		updatePlaylist(userID, playlistID, tracks)
+		db.AddSmartPlaylist(smartplaylist)
+		executeSmartPlaylist(smartplaylist)
 	}
 
 	rest.PostRequest(response, request, smartplaylist)
 }
 
-func runSmartPlaylist(smartplaylist smartplaylist) {
+func executeSmartPlaylist(smartplaylist db.SmartPlaylist) {
+	userID := smartplaylist.User
 
+	// Get the results of each rule
+	tracks := getTracksFromRules(smartplaylist)
+
+	// If playlist doesn't exist, create it
+	playlistID, err := getPlaylistIDFromName(userID, smartplaylist.Name)
+	if err != nil {
+		playlistID = createNewPlaylist(userID, smartplaylist.Name)
+	}
+
+	updatePlaylist(userID, playlistID, tracks)
 }

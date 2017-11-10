@@ -1,7 +1,7 @@
 package server
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"sync"
 
@@ -18,8 +18,10 @@ func Start() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go http.ListenAndServe(":8080", nil)
-	fmt.Println("Server listening")
 
+	// Start auto-updating playlists every N minutes
+	go smartplaylists.Start(5)
+	log.Println("Server started")
 	// Wait until go routines run
 	wg.Wait()
 }
