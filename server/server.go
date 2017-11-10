@@ -18,7 +18,7 @@ func Start() {
 	// Start the server
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go http.ListenAndServe(":8080", nil)
+	go http.ListenAndServe(":443", nil)
 
 	// Start auto-updating playlists every N minutes
 	wg.Add(2)
