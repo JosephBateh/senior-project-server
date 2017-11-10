@@ -4,18 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
-	"github.com/zmb3/spotify"
-
-	"github.com/josephbateh/senior-project-server/authentication"
-	db "github.com/josephbateh/senior-project-server/database"
 	"github.com/josephbateh/senior-project-server/rest"
 )
 
 type rule struct {
-	User      string `json:"user"`
 	Attribute string `json:"attribute"`
 	Match     bool   `json:"match"`
 	Value     string `json:"value"`
@@ -23,6 +17,7 @@ type rule struct {
 
 type smartplaylist struct {
 	Name  string `json:"name"`
+	User  string `json:"user"`
 	Rules []rule `json:"rules"`
 }
 
@@ -46,7 +41,7 @@ func Playlists(response http.ResponseWriter, request *http.Request) {
 		}
 
 		// Get the user ID
-		userID := getUserIDFromSmartPlaylist(smartplaylist)
+		userID := smartplaylist.User
 
 		// Get the results of each rule
 		tracks := getTracksFromRules(smartplaylist)
@@ -64,14 +59,6 @@ func Playlists(response http.ResponseWriter, request *http.Request) {
 	rest.PostRequest(response, request, smartplaylist)
 }
 
-func getUserClient(userID string) (db.User, spotify.Client, error) {
-	// Get user from the DB
-	user, err := db.GetUser(userID)
-	if err != nil {
-		log.Fatal(err)
-	}
+func runSmartPlaylist(smartplaylist smartplaylist) {
 
-	// Get client from user
-	client := authentication.GetClient(user.UserToken)
-	return user, client, err
 }

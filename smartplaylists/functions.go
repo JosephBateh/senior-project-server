@@ -4,9 +4,23 @@ import (
 	"errors"
 	"log"
 
+	"github.com/josephbateh/senior-project-server/authentication"
+	db "github.com/josephbateh/senior-project-server/database"
 	"github.com/zmb3/spotify"
 	set "gopkg.in/fatih/set.v0"
 )
+
+func getUserClient(userID string) (db.User, spotify.Client, error) {
+	// Get user from the DB
+	user, err := db.GetUser(userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get client from user
+	client := authentication.GetClient(user.UserToken)
+	return user, client, err
+}
 
 func getTracksFromRules(smartplaylist smartplaylist) []string {
 	var trueMatch [][]string
@@ -14,7 +28,7 @@ func getTracksFromRules(smartplaylist smartplaylist) []string {
 
 	for i := 0; i < len(smartplaylist.Rules); i++ {
 		rule := smartplaylist.Rules[i]
-		ruleTracks := playlistMatchValue(rule.User, rule.Match, rule.Value)
+		ruleTracks := playlistMatchValue(smartplaylist.User, rule.Match, rule.Value)
 		if rule.Match {
 			trueMatch = append(trueMatch, ruleTracks)
 		} else {
@@ -26,10 +40,6 @@ func getTracksFromRules(smartplaylist smartplaylist) []string {
 	unionOfFalse := unionOfTracks(falseMatch...)
 
 	return intersectionOfTracks(unionOfTrue, unionOfFalse)
-}
-
-func getUserIDFromSmartPlaylist(smartplaylist smartplaylist) string {
-	return smartplaylist.Rules[0].User
 }
 
 func unionOfTracks(trackList ...[]string) []string {
