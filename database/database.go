@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"hash/fnv"
 	"log"
 	"os"
 
@@ -30,6 +31,42 @@ func GetUser(userID string) (User, error) {
 	// Query One
 	result := User{}
 	err := c.Find(bson.M{"userid": userID}).One(&result)
+	disconnect()
+	return result, err
+}
+
+// AddSmartPlaylist adds as SmartPlaylist to the database
+func AddSmartPlaylist(playlist SmartPlaylist) {
+	connect()
+	hashString := playlist.User + playlist.Name
+	hashVal := hash(hashString)
+	playlist.Hash = hashVal
+
+	c := session.DB(os.Getenv("MLAB_DB")).C("smartplaylists")
+
+	// Check if playlist already exists
+	exists := SmartPlaylist{}
+	err := c.Find(bson.M{"hash": hashVal}).One(&exists)
+	if err == nil {
+		// It already exists, delete it
+		c.Remove(bson.M{"hash": hashVal})
+	}
+
+	err = c.Insert(playlist)
+	if err != nil {
+		fmt.Println(err)
+	}
+	disconnect()
+	log.Println("Smart playlist added")
+}
+
+// GetAllSmartPlaylists returns all smart playlists in the DB
+func GetAllSmartPlaylists() ([]SmartPlaylist, error) {
+	connect()
+	c := session.DB(os.Getenv("MLAB_DB")).C("smartplaylists")
+	// Query One
+	result := []SmartPlaylist{}
+	err := c.Find(bson.M{}).All(&result)
 	disconnect()
 	return result, err
 }
@@ -67,4 +104,10 @@ func connect() *mgo.Session {
 
 func disconnect() {
 	session.Close()
+}
+
+func hash(s string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return h.Sum32()
 }
