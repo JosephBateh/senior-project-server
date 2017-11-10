@@ -19,8 +19,8 @@ func Start() {
 	// Start the server
 	var wg sync.WaitGroup
 	wg.Add(1)
-	if os.Getenv("PRODUCTION") == "true" {
-		go http.ListenAndServe(":443", nil)
+	if os.Getenv("PORT") != "" {
+		go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 	} else {
 		go http.ListenAndServe(":8080", nil)
 	}
