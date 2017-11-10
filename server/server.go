@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/josephbateh/senior-project-server/smartplaylists"
+	"github.com/josephbateh/senior-project-server/useractivity"
 
 	"github.com/josephbateh/senior-project-server/authentication"
 )
@@ -20,8 +21,11 @@ func Start() {
 	go http.ListenAndServe(":8080", nil)
 
 	// Start auto-updating playlists every N minutes
-	go smartplaylists.Start(5)
+	wg.Add(2)
+	go smartplaylists.Start(1)
+	go useractivity.Start(1)
 	log.Println("Server started")
+
 	// Wait until go routines run
 	wg.Wait()
 }

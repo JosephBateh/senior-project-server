@@ -12,6 +12,7 @@ var ticker *time.Ticker
 var quit chan struct{}
 
 func updateSmartPlaylists() {
+	log.Println("Begin updating smart playlists")
 	allSmartPlaylists, err := db.GetAllSmartPlaylists()
 	if err != nil {
 		fmt.Println(err)
@@ -20,7 +21,7 @@ func updateSmartPlaylists() {
 	for _, playlist := range allSmartPlaylists {
 		executeSmartPlaylist(playlist)
 	}
-	log.Println("Smart Playlists Updated")
+	log.Println("End updating smart playlists")
 }
 
 // Start updating all smart playlists every period (in minutes)
