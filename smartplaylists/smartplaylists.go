@@ -12,6 +12,7 @@ import (
 	"github.com/josephbateh/senior-project-server/authentication"
 	db "github.com/josephbateh/senior-project-server/database"
 	"github.com/josephbateh/senior-project-server/rest"
+	"gopkg.in/fatih/set.v0"
 )
 
 type rule struct {
@@ -21,33 +22,45 @@ type rule struct {
 	Value     string `json:"value"`
 }
 
+type smartplaylist struct {
+	Name  string `json:"name"`
+	Rules []rule `json:"rules"`
+}
+
 // Playlists is the function called for the smartplaylist endpoint
 func Playlists(response http.ResponseWriter, request *http.Request) {
-	var rules []rule
+	var smartplaylist smartplaylist
+
+	// If statement guards against an OPTIONS request
 	if request.Method == http.MethodPost {
+
+		// Parse JSON into byte array
 		body, err := ioutil.ReadAll(request.Body)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		err = json.Unmarshal(body, &rules)
+		// Put new smart playlist information into smartplaylist
+		err = json.Unmarshal(body, &smartplaylist)
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		var tracks []string
+		// Get the results of each rule
+		var tracks [][]string
 		var userID string
-		for i := 0; i < len(rules); i++ {
-			rule := rules[i]
+		for i := 0; i < len(smartplaylist.Rules); i++ {
+			rule := smartplaylist.Rules[i]
 			ruleTracks := PlaylistMatchValue(rule.User, rule.Match, rule.Value)
-			tracks = ruleTracks
+			tracks = append(tracks, ruleTracks)
 			userID = rule.User
 		}
 
-		updatePlaylist(userID, tracks)
+		// Clear playlist and add new tracks
+		updatePlaylist(userID, unionOfTracks(tracks...))
 	}
 
-	rest.PostRequest(response, request, rules)
+	rest.PostRequest(response, request, smartplaylist)
 }
 
 func updatePlaylist(userID string, tracks []string) {
@@ -106,4 +119,19 @@ func PlaylistMatchValue(userID string, match bool, value string) []string {
 		tracks = append(tracks, string(track))
 	}
 	return tracks
+}
+
+// TODO: Make this not O(N^2)
+func unionOfTracks(trackList ...[]string) []string {
+	tracks := set.New()
+
+	for i := 0; i < len(trackList); i++ {
+		newSet := set.New()
+		for j := 0; j < len(trackList[i]); j++ {
+			newSet.Add(trackList[i][j])
+		}
+		tracks.Merge(newSet)
+	}
+
+	return set.StringSlice(tracks)
 }
