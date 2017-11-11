@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/zmb3/spotify"
+
 	"golang.org/x/oauth2"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -14,8 +16,47 @@ import (
 var session *mgo.Session
 
 // UpdatePlaysForUser updates the number of times a user has played songs
-func UpdatePlaysForUser(users []User) {
+func UpdatePlaysForUser(user User, recents []spotify.RecentlyPlayedItem) {
+	for _, track := range recents {
+		addSongPlay(user.UserID, track)
+	}
+}
 
+func addSongPlay(userID string, track spotify.RecentlyPlayedItem) {
+	connect()
+	c := session.DB(os.Getenv("MLAB_DB")).C("plays")
+
+	// Get hash for play
+	hash := hash(userID + track.PlayedAt.String())
+
+	// Check if play already exists
+	result := Play{}
+	err := c.Find(bson.M{"hash": hash, "user": userID}).One(&result)
+	if err != nil {
+		// Play not found
+		err = c.Insert(&Play{hash, userID, string(track.Track.ID), track.PlayedAt})
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	disconnect()
+}
+
+// NumberOfPlays returns the number of times a user has played a track
+func NumberOfPlays(user string, track string) int {
+	connect()
+	c := session.DB(os.Getenv("MLAB_DB")).C("plays")
+
+	// Check if play already exists
+	results := []Play{}
+	err := c.Find(bson.M{"user": user, "track": track}).All(&results)
+	plays := 0
+	if err == nil {
+		// Played at least once
+		plays = len(results)
+	}
+	disconnect()
+	return plays
 }
 
 // AddUser in users collection

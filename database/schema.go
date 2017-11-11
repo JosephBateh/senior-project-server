@@ -19,9 +19,10 @@ type SmartPlaylist struct {
 
 // Play is a single instance of a song being played by a user
 type Play struct {
-	User string
-	Song string
-	Time time.Time
+	Hash  uint32
+	User  string
+	Track string
+	Time  time.Time
 }
 
 type rule struct {

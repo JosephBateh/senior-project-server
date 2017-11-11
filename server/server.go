@@ -28,7 +28,7 @@ func Start() {
 	// Start auto-updating playlists every N minutes
 	wg.Add(2)
 	go smartplaylists.Start(30)
-	go useractivity.Start(30)
+	go useractivity.Start(1)
 	log.Println("Server started")
 
 	// Wait until go routines run
