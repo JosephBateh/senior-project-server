@@ -1,8 +1,11 @@
 package useractivity
 
 import (
+	"fmt"
 	"log"
 	"time"
+
+	"github.com/josephbateh/senior-project-server/api"
 
 	db "github.com/josephbateh/senior-project-server/database"
 )
@@ -18,7 +21,11 @@ func checkUserActivity() {
 		log.Fatal(err)
 	}
 
-	db.UpdatePlaysForUser(users)
+	for _, user := range users {
+		recents := api.GetUserRecentlyPlayed(user.UserID)
+		db.UpdatePlaysForUser(user, recents)
+		fmt.Println(db.NumberOfPlays(user.UserID, "2YqKlMOlKlKQbBtzIOv2U8"))
+	}
 
 	log.Println("End checking user activity")
 }
