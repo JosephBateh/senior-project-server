@@ -27,7 +27,7 @@ type Play struct {
 
 type rule struct {
 	Attribute string `json:"attribute"`
-	Match     bool   `json:"match"`
+	Match     string `json:"match"`
 	Value     string `json:"value"`
 }
 

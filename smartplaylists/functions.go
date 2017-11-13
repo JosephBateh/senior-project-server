@@ -29,7 +29,7 @@ func getTracksFromRules(smartplaylist db.SmartPlaylist) []string {
 	for i := 0; i < len(smartplaylist.Rules); i++ {
 		rule := smartplaylist.Rules[i]
 		ruleTracks := playlistMatchValue(smartplaylist.User, rule.Match, rule.Value)
-		if rule.Match {
+		if rule.Match == "is" {
 			trueMatch = append(trueMatch, ruleTracks)
 		} else {
 			falseMatch = append(falseMatch, ruleTracks)
@@ -131,7 +131,7 @@ func updatePlaylist(userID string, playlistIDString string, tracks []string) {
 }
 
 // PlaylistMatchValue will return tracks that are in the provided playlist
-func playlistMatchValue(userID string, match bool, value string) []string {
+func playlistMatchValue(userID string, match string, value string) []string {
 	user, client, err := getUserClient(userID)
 	if err != nil {
 		log.Fatal(err)
