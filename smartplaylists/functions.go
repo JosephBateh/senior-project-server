@@ -22,24 +22,81 @@ func getUserClient(userID string) (db.User, spotify.Client, error) {
 	return user, client, err
 }
 
+// PlaylistMatchValue will return tracks that are in the provided playlist
+func playlistFunc(userID string, match string, value string) []string {
+	user, client, err := getUserClient(userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get users playlists
+	playlistPage, err := client.GetPlaylist(user.UserID, spotify.ID(value))
+	if err != nil {
+		log.Fatal(err)
+	}
+	playlistTracks := playlistPage.Tracks.Tracks
+
+	var tracks []string
+	for i := 0; i < len(playlistTracks); i++ {
+		track := playlistTracks[i].Track.ID
+		tracks = append(tracks, string(track))
+	}
+	return tracks
+}
+
+func playsFunc(userID string, match string, value string) []string {
+	user, client, err := getUserClient(userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get playlist
+	playlistPage, err := client.GetPlaylist(user.UserID, spotify.ID(value))
+	if err != nil {
+		log.Fatal(err)
+	}
+	playlistTracks := playlistPage.Tracks.Tracks
+
+	var tracks []string
+	for i := 0; i < len(playlistTracks); i++ {
+		track := playlistTracks[i].Track.ID
+		tracks = append(tracks, string(track))
+	}
+	return tracks
+}
+
+type ruleFunc func(string, string, string) []string
+
 func getTracksFromRules(smartplaylist db.SmartPlaylist) []string {
-	var trueMatch [][]string
-	var falseMatch [][]string
+	var ruleFunctions map[string]ruleFunc
+	ruleFunctions = make(map[string]ruleFunc)
+	ruleFunctions["playlist"] = playlistFunc
+	ruleFunctions["plays"] = playsFunc
+
+	var isMatch [][]string
+	var isNotMatch [][]string
+	var isGreaterMatch [][]string
+	var isLessMatch [][]string
 
 	for i := 0; i < len(smartplaylist.Rules); i++ {
 		rule := smartplaylist.Rules[i]
-		ruleTracks := playlistMatchValue(smartplaylist.User, rule.Match, rule.Value)
-		if rule.Match == "is" {
-			trueMatch = append(trueMatch, ruleTracks)
-		} else {
-			falseMatch = append(falseMatch, ruleTracks)
+		ruleTracks := ruleFunctions[rule.Attribute](smartplaylist.User, rule.Match, rule.Value)
+		switch rule.Match {
+		case "is":
+			isMatch = append(isMatch, ruleTracks)
+		case "is not":
+			isNotMatch = append(isNotMatch, ruleTracks)
+		case "greater":
+			isGreaterMatch = append(isGreaterMatch, ruleTracks)
+		case "less":
+			isLessMatch = append(isLessMatch, ruleTracks)
 		}
 	}
 
-	unionOfTrue := unionOfTracks(trueMatch...)
-	unionOfFalse := unionOfTracks(falseMatch...)
+	union := unionOfTracks(isMatch...)
+	intersection := unionOfTracks(isNotMatch...)
 
-	return intersectionOfTracks(unionOfTrue, unionOfFalse)
+	return intersectionOfTracks(union, intersection)
 }
 
 func unionOfTracks(trackList ...[]string) []string {
@@ -128,28 +185,6 @@ func updatePlaylist(userID string, playlistIDString string, tracks []string) {
 
 	client.RemoveTracksFromPlaylist(user.UserID, playlistID, currentTrackIDs...)
 	client.AddTracksToPlaylist(user.UserID, playlistID, trackIDs...)
-}
-
-// PlaylistMatchValue will return tracks that are in the provided playlist
-func playlistMatchValue(userID string, match string, value string) []string {
-	user, client, err := getUserClient(userID)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Get users playlists
-	playlistPage, err := client.GetPlaylist(user.UserID, spotify.ID(value))
-	if err != nil {
-		log.Fatal(err)
-	}
-	playlistTracks := playlistPage.Tracks.Tracks
-
-	var tracks []string
-	for i := 0; i < len(playlistTracks); i++ {
-		track := playlistTracks[i].Track.ID
-		tracks = append(tracks, string(track))
-	}
-	return tracks
 }
 
 func createNewPlaylist(userID string, name string) string {
