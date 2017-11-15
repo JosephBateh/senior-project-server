@@ -39,4 +39,5 @@ func setupRoutes() {
 	http.HandleFunc("/", authentication.Login)
 	http.HandleFunc("/callback", authentication.Complete)
 	http.HandleFunc("/smartplaylist", smartplaylists.Playlists)
+	http.HandleFunc("/attributes", smartplaylists.Attributes)
 }

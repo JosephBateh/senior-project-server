@@ -36,6 +36,21 @@ func Playlists(response http.ResponseWriter, request *http.Request) {
 	rest.PostRequest(response, request, smartplaylist)
 }
 
+// Attributes returns the possible attributes for rules
+func Attributes(response http.ResponseWriter, request *http.Request) {
+	type attr struct {
+		Attributes []string
+	}
+
+	butes := []string{"plays", "playlist"}
+
+	values := attr{
+		Attributes: butes,
+	}
+
+	rest.GetRequest(response, request, values)
+}
+
 func executeSmartPlaylist(smartplaylist db.SmartPlaylist) {
 	userID := smartplaylist.User
 
