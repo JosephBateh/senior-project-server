@@ -44,7 +44,7 @@ func Attributes(response http.ResponseWriter, request *http.Request) {
 		Attributes []string
 	}
 
-	butes := []string{"plays", "playlist"}
+	butes := []string{"plays", "playlist", "artist"}
 
 	values := attr{
 		Attributes: butes,
