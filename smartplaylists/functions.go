@@ -98,24 +98,15 @@ func playlistFunc(userID string, match string, value string) []string {
 }
 
 func playsFunc(userID string, match string, value string) []string {
-	user, client, err := getUserClient(userID)
-	if err != nil {
-		fmt.Println(err)
+	plays := db.NumberOfPlays(userID)
+
+	var result []string
+	for _, play := range plays {
+		result = append(result, play.Track)
 	}
 
-	// Get playlist
-	playlistPage, err := client.GetPlaylist(user.UserID, spotify.ID(value))
-	if err != nil {
-		fmt.Println(err)
-	}
-	playlistTracks := playlistPage.Tracks.Tracks
-
-	var tracks []string
-	for i := 0; i < len(playlistTracks); i++ {
-		track := playlistTracks[i].Track.ID
-		tracks = append(tracks, string(track))
-	}
-	return tracks
+	fmt.Println(result)
+	return result
 }
 
 func unionOfTracks(trackList ...[]string) []string {

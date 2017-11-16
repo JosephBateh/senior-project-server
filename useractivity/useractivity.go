@@ -1,7 +1,6 @@
 package useractivity
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -24,7 +23,6 @@ func checkUserActivity() {
 	for _, user := range users {
 		recents := api.GetUserRecentlyPlayed(user.UserID)
 		db.UpdatePlaysForUser(user, recents)
-		fmt.Println(db.NumberOfPlays(user.UserID, "2YqKlMOlKlKQbBtzIOv2U8"))
 	}
 
 	log.Println("End checking user activity")

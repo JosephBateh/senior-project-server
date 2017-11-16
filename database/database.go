@@ -42,8 +42,8 @@ func addSongPlay(userID string, track spotify.RecentlyPlayedItem) {
 	disconnect()
 }
 
-// NumberOfPlays returns the number of times a user has played a track
-func NumberOfPlays(user string, track string) int {
+// NumberOfPlaysForTrack returns the number of times a user has played a track
+func NumberOfPlaysForTrack(user string, track string) int {
 	connect()
 	c := session.DB(os.Getenv("MLAB_DB")).C("plays")
 
@@ -57,6 +57,20 @@ func NumberOfPlays(user string, track string) int {
 	}
 	disconnect()
 	return plays
+}
+
+// NumberOfPlays returns the plays for a user
+func NumberOfPlays(user string) []Play {
+	connect()
+	c := session.DB(os.Getenv("MLAB_DB")).C("plays")
+
+	results := []Play{}
+	err := c.Find(bson.M{}).All(&results)
+	if err != nil {
+		fmt.Println("something went wrong finding user plays")
+	}
+	disconnect()
+	return results
 }
 
 // AddUser in users collection
