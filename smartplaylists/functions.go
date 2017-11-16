@@ -14,8 +14,9 @@ import (
 type ruleFunc func(string, string, string) []string
 
 const (
-	plays    = "plays"
-	playlist = "playlist"
+	plays        = "plays"
+	playlist     = "playlist"
+	artistString = "artist"
 )
 
 const (
@@ -27,8 +28,9 @@ const (
 
 func ruleFunctions() map[string]ruleFunc {
 	var ruleFunctions = map[string]ruleFunc{
-		playlist: playlistFunc,
-		plays:    playsFunc,
+		playlist:     playlistFunc,
+		plays:        playsFunc,
+		artistString: artistFunc,
 	}
 	return ruleFunctions
 }
@@ -76,7 +78,35 @@ func getUserClient(userID string) (db.User, spotify.Client, error) {
 	return user, client, err
 }
 
-// PlaylistMatchValue will return tracks that are in the provided playlist
+func artistFunc(userID string, match string, value string) []string {
+	_, client, err := getUserClient(userID)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	searchResult, _ := client.Search(value, spotify.SearchTypeArtist)
+	artistID := searchResult.Artists.Artists[0].ID
+
+	// Get artist albums
+	artist, err := client.GetArtistAlbums(artistID)
+	if err != nil {
+		fmt.Println(err)
+	}
+	artistAlbums := artist.Albums
+
+	var tracks []string
+	for _, album := range artistAlbums {
+		albumID := album.ID
+		albumTracksPage, _ := client.GetAlbumTracks(albumID)
+		albumTracks := albumTracksPage.Tracks
+		for _, track := range albumTracks {
+			tracks = append(tracks, track.ID.String())
+		}
+	}
+
+	return tracks
+}
+
 func playlistFunc(userID string, match string, value string) []string {
 	user, client, err := getUserClient(userID)
 	if err != nil {
@@ -221,8 +251,47 @@ func updatePlaylist(userID string, playlistIDString string, tracks []string) {
 		currentTrackIDs = append(currentTrackIDs, object.Track.ID)
 	}
 
-	client.RemoveTracksFromPlaylist(user.UserID, playlistID, currentTrackIDs...)
-	client.AddTracksToPlaylist(user.UserID, playlistID, trackIDs...)
+	if len(currentTrackIDs) > 100 {
+		div := len(currentTrackIDs) / 100
+		mod := len(currentTrackIDs) % 100
+		for i := 0; div > 0; div-- {
+			rge := i * 100
+			i++
+			var currIDs []spotify.ID
+			if div == 1 {
+				currIDs = currentTrackIDs[rge : rge+mod]
+			} else {
+				currIDs = currentTrackIDs[rge : rge+99]
+			}
+			client.RemoveTracksFromPlaylist(user.UserID, playlistID, currIDs...)
+		}
+	} else {
+		_, err = client.RemoveTracksFromPlaylist(user.UserID, playlistID, currentTrackIDs...)
+	}
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if len(trackIDs) > 100 {
+		times := len(trackIDs) / 100
+		mod := len(trackIDs) % 100
+		for i := 0; times > 0; times-- {
+			rge := i * 100
+			i++
+			var currIDs []spotify.ID
+			if times == 1 {
+				currIDs = trackIDs[rge : rge+mod]
+			} else {
+				currIDs = trackIDs[rge : rge+99]
+			}
+			client.AddTracksToPlaylist(user.UserID, playlistID, currIDs...)
+		}
+	} else {
+		_, err = client.AddTracksToPlaylist(user.UserID, playlistID, trackIDs...)
+	}
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func createNewPlaylist(userID string, name string) string {
