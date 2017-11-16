@@ -30,7 +30,9 @@ func Playlists(response http.ResponseWriter, request *http.Request) {
 		}
 
 		db.AddSmartPlaylist(smartplaylist)
-		executeSmartPlaylist(smartplaylist)
+
+		// Allow playlist to execute without blocking response
+		go executeSmartPlaylist(smartplaylist)
 	}
 
 	rest.PostRequest(response, request, smartplaylist)

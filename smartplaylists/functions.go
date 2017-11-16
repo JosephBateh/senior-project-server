@@ -3,6 +3,7 @@ package smartplaylists
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/josephbateh/senior-project-server/authentication"
 	db "github.com/josephbateh/senior-project-server/database"
@@ -100,12 +101,39 @@ func playlistFunc(userID string, match string, value string) []string {
 func playsFunc(userID string, match string, value string) []string {
 	plays := db.NumberOfPlays(userID)
 
-	var result []string
+	var playedSongs []string
+	var playSet = set.New()
 	for _, play := range plays {
-		result = append(result, play.Track)
+		playSet.Add(play.Track)
 	}
 
-	fmt.Println(result)
+	playedSongs = set.StringSlice(playSet)
+
+	var result []string
+	for _, play := range playedSongs {
+		numPlays := db.NumberOfPlaysForTrack(userID, play)
+		valueInt, _ := strconv.Atoi(value)
+		switch match {
+		case "is":
+			if numPlays == valueInt {
+				result = append(result, play)
+			}
+		case "is not":
+			if numPlays != valueInt {
+				result = append(result, play)
+			}
+		case "greater":
+			if numPlays > valueInt {
+				result = append(result, play)
+			}
+		case "less":
+			if numPlays < valueInt {
+				result = append(result, play)
+			}
+		default:
+			fmt.Println("default")
+		}
+	}
 	return result
 }
 
