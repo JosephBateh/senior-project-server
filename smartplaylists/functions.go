@@ -258,7 +258,7 @@ func updatePlaylist(userID string, playlistIDString string, tracks []string) {
 			rge := i * 100
 			i++
 			var currIDs []spotify.ID
-			if div == 1 {
+			if div == 0 {
 				currIDs = currentTrackIDs[rge : rge+mod]
 			} else {
 				currIDs = currentTrackIDs[rge : rge+99]
@@ -279,7 +279,7 @@ func updatePlaylist(userID string, playlistIDString string, tracks []string) {
 			rge := i * 100
 			i++
 			var currIDs []spotify.ID
-			if times == 1 {
+			if times == 0 {
 				currIDs = trackIDs[rge : rge+mod]
 			} else {
 				currIDs = trackIDs[rge : rge+99]
