@@ -30,10 +30,27 @@ func Playlists(response http.ResponseWriter, request *http.Request) {
 		}
 
 		db.AddSmartPlaylist(smartplaylist)
-		executeSmartPlaylist(smartplaylist)
+
+		// Allow playlist to execute without blocking response
+		go executeSmartPlaylist(smartplaylist)
 	}
 
 	rest.PostRequest(response, request, smartplaylist)
+}
+
+// Attributes returns the possible attributes for rules
+func Attributes(response http.ResponseWriter, request *http.Request) {
+	type attr struct {
+		Attributes []string
+	}
+
+	butes := []string{"plays", "playlist"}
+
+	values := attr{
+		Attributes: butes,
+	}
+
+	rest.GetRequest(response, request, values)
 }
 
 func executeSmartPlaylist(smartplaylist db.SmartPlaylist) {

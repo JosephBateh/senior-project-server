@@ -27,7 +27,7 @@ func Start() {
 
 	// Start auto-updating playlists every N minutes
 	wg.Add(2)
-	go smartplaylists.Start(30)
+	go smartplaylists.Start(15)
 	go useractivity.Start(30)
 	log.Println("Server started")
 
@@ -39,4 +39,5 @@ func setupRoutes() {
 	http.HandleFunc("/", authentication.Login)
 	http.HandleFunc("/callback", authentication.Complete)
 	http.HandleFunc("/smartplaylist", smartplaylists.Playlists)
+	http.HandleFunc("/attributes", smartplaylists.Attributes)
 }
