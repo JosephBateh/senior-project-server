@@ -13,12 +13,12 @@ var ticker *time.Ticker
 var quit chan struct{}
 
 func checkUserActivity() {
-	log.Println("Begin checking user activity")
 	start := time.Now()
 	// Get list of all users
 	users, err := db.GetAllUsers()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error getting users:", err)
+		return
 	}
 
 	for _, user := range users {

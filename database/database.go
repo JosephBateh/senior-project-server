@@ -97,11 +97,18 @@ func GetUser(userID string) (User, error) {
 
 // GetAllUsers returns all users in the database
 func GetAllUsers() ([]User, error) {
-	connect()
+	_, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	c := session.DB(os.Getenv("MLAB_DB")).C("users")
+
 	// Query One
 	result := []User{}
-	err := c.Find(bson.M{}).All(&result)
+	err = c.Find(bson.M{}).All(&result)
+	if err != nil {
+		return nil, err
+	}
 	disconnect()
 	return result, err
 }
@@ -133,11 +140,17 @@ func AddSmartPlaylist(playlist SmartPlaylist) {
 
 // GetAllSmartPlaylists returns all smart playlists in the DB
 func GetAllSmartPlaylists() ([]SmartPlaylist, error) {
-	connect()
+	_, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	c := session.DB(os.Getenv("MLAB_DB")).C("smartplaylists")
 	// Query One
 	result := []SmartPlaylist{}
-	err := c.Find(bson.M{}).All(&result)
+	err = c.Find(bson.M{}).All(&result)
+	if err != nil {
+		return nil, err
+	}
 	disconnect()
 	return result, err
 }
@@ -172,7 +185,7 @@ func connect() (*mgo.Session, error) {
 }
 
 func disconnect() {
-	//session.Close()
+	///session.Close()
 }
 
 func hash(s string) uint32 {

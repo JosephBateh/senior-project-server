@@ -1,7 +1,6 @@
 package smartplaylists
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -13,11 +12,11 @@ var quit chan struct{}
 
 // UpdateSmartPlaylists is public so I can test it
 func UpdateSmartPlaylists() {
-	log.Println("Updating smart playlists...")
 	start := time.Now()
 	allSmartPlaylists, err := db.GetAllSmartPlaylists()
 	if err != nil {
-		fmt.Println(err)
+		log.Println("Error getting smart playlists:", err)
+		return
 	}
 
 	for _, playlist := range allSmartPlaylists {
