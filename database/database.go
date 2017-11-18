@@ -60,17 +60,17 @@ func NumberOfPlaysForTrack(user string, track string) int {
 }
 
 // NumberOfPlays returns the plays for a user
-func NumberOfPlays(user string) []Play {
+func NumberOfPlays(user string) ([]Play, error) {
 	connect()
 	c := session.DB(os.Getenv("MLAB_DB")).C("plays")
 
 	results := []Play{}
 	err := c.Find(bson.M{}).All(&results)
 	if err != nil {
-		fmt.Println("something went wrong finding user plays")
+		return nil, err
 	}
 	disconnect()
-	return results
+	return results, nil
 }
 
 // AddUser in users collection
@@ -162,19 +162,17 @@ func Test() {
 	disconnect()
 }
 
-func connect() *mgo.Session {
+func connect() (*mgo.Session, error) {
 	var err error
 	session, err = mgo.Dial(os.Getenv("MLAB_LOGIN"))
-	if err != nil {
-		panic(err)
+	if err == nil {
+		session.SetMode(mgo.Monotonic, true)
 	}
-	// Optional. Switch the session to a monotonic behavior.
-	session.SetMode(mgo.Monotonic, true)
-	return session
+	return session, err
 }
 
 func disconnect() {
-	session.Close()
+	//session.Close()
 }
 
 func hash(s string) uint32 {
