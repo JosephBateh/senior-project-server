@@ -155,7 +155,10 @@ func playsFunc(userID string, match string, value string) ([]string, error) {
 
 	var result []string
 	for _, play := range playedSongs {
-		numPlays := db.NumberOfPlaysForTrack(userID, play)
+		numPlays, err := db.NumberOfPlaysForTrack(userID, play)
+		if err != nil {
+			return nil, err
+		}
 		valueInt, _ := strconv.Atoi(value)
 		switch match {
 		case "is":
