@@ -57,7 +57,10 @@ func executeSmartPlaylist(smartplaylist db.SmartPlaylist) {
 	userID := smartplaylist.User
 
 	// Get the results of each rule
-	tracks := getTracksFromRules(smartplaylist)
+	tracks, err := getTracksFromRules(smartplaylist)
+	if err != nil {
+		return
+	}
 
 	// If playlist doesn't exist, create it
 	playlistID, err := getPlaylistIDFromName(userID, smartplaylist.Name)

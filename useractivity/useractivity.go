@@ -13,11 +13,12 @@ var ticker *time.Ticker
 var quit chan struct{}
 
 func checkUserActivity() {
-	log.Println("Begin checking user activity")
+	start := time.Now()
 	// Get list of all users
 	users, err := db.GetAllUsers()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error getting users:", err)
+		return
 	}
 
 	for _, user := range users {
@@ -25,7 +26,9 @@ func checkUserActivity() {
 		db.UpdatePlaysForUser(user, recents)
 	}
 
-	log.Println("End checking user activity")
+	elapsed := time.Since(start)
+	userCount := len(users)
+	log.Printf("Updated %v users in %s...", userCount, elapsed)
 }
 
 // Start begins checking user activity every period (in minutes)

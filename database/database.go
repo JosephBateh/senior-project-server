@@ -13,25 +13,29 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-var session *mgo.Session
-
 // UpdatePlaysForUser updates the number of times a user has played songs
 func UpdatePlaysForUser(user User, recents []spotify.RecentlyPlayedItem) {
 	for _, track := range recents {
-		addSongPlay(user.UserID, track)
+		err := addSongPlay(user.UserID, track)
+		if err != nil {
+			//log.Println("Failed to add play:", err)
+		}
 	}
 }
 
-func addSongPlay(userID string, track spotify.RecentlyPlayedItem) {
-	connect()
+func addSongPlay(userID string, track spotify.RecentlyPlayedItem) error {
+	session, err := connect()
 	c := session.DB(os.Getenv("MLAB_DB")).C("plays")
+	if err != nil {
+		return err
+	}
 
 	// Get hash for play
 	hash := hash(userID + track.PlayedAt.String())
 
 	// Check if play already exists
 	result := Play{}
-	err := c.Find(bson.M{"hash": hash, "user": userID}).One(&result)
+	err = c.Find(bson.M{"hash": hash, "user": userID}).One(&result)
 	if err != nil {
 		// Play not found
 		err = c.Insert(&Play{hash, userID, string(track.Track.ID), track.PlayedAt})
@@ -39,76 +43,101 @@ func addSongPlay(userID string, track spotify.RecentlyPlayedItem) {
 			log.Fatal(err)
 		}
 	}
-	disconnect()
+	disconnect(session)
+	return err
 }
 
 // NumberOfPlaysForTrack returns the number of times a user has played a track
-func NumberOfPlaysForTrack(user string, track string) int {
-	connect()
+func NumberOfPlaysForTrack(user string, track string) (int, error) {
+	session, err := connect()
+	if err != nil {
+		return 0, err
+	}
 	c := session.DB(os.Getenv("MLAB_DB")).C("plays")
 
 	// Check if play already exists
 	results := []Play{}
-	err := c.Find(bson.M{"user": user, "track": track}).All(&results)
+	err = c.Find(bson.M{"user": user, "track": track}).All(&results)
 	plays := 0
 	if err == nil {
 		// Played at least once
 		plays = len(results)
 	}
-	disconnect()
-	return plays
+	disconnect(session)
+	return plays, nil
 }
 
 // NumberOfPlays returns the plays for a user
-func NumberOfPlays(user string) []Play {
-	connect()
+func NumberOfPlays(user string) ([]Play, error) {
+	session, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	c := session.DB(os.Getenv("MLAB_DB")).C("plays")
 
 	results := []Play{}
-	err := c.Find(bson.M{}).All(&results)
+	err = c.Find(bson.M{}).All(&results)
 	if err != nil {
-		fmt.Println("something went wrong finding user plays")
+		return nil, err
 	}
-	disconnect()
-	return results
+	disconnect(session)
+	return results, nil
 }
 
 // AddUser in users collection
-func AddUser(userID string, userAuth oauth2.Token) {
-	connect()
+func AddUser(userID string, userAuth oauth2.Token) error {
+	session, err := connect()
+	if err != nil {
+		return err
+	}
 	c := session.DB(os.Getenv("MLAB_DB")).C("users")
-	err := c.Insert(&User{userID, userAuth})
+	err = c.Insert(&User{userID, userAuth})
 	if err != nil {
 		log.Fatal(err)
 	}
-	disconnect()
+	disconnect(session)
+	return err
 }
 
 // GetUser returns the user with the given userID
 func GetUser(userID string) (User, error) {
-	connect()
+	session, err := connect()
+	result := User{}
+	if err != nil {
+		return result, err
+	}
 	c := session.DB(os.Getenv("MLAB_DB")).C("users")
 	// Query One
-	result := User{}
-	err := c.Find(bson.M{"userid": userID}).One(&result)
-	disconnect()
+	err = c.Find(bson.M{"userid": userID}).One(&result)
+	disconnect(session)
 	return result, err
 }
 
 // GetAllUsers returns all users in the database
 func GetAllUsers() ([]User, error) {
-	connect()
+	session, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	c := session.DB(os.Getenv("MLAB_DB")).C("users")
+
 	// Query One
 	result := []User{}
-	err := c.Find(bson.M{}).All(&result)
-	disconnect()
+	err = c.Find(bson.M{}).All(&result)
+	if err != nil {
+		return nil, err
+	}
+	disconnect(session)
 	return result, err
 }
 
 // AddSmartPlaylist adds as SmartPlaylist to the database
-func AddSmartPlaylist(playlist SmartPlaylist) {
-	connect()
+func AddSmartPlaylist(playlist SmartPlaylist) error {
+	session, err := connect()
+	if err != nil {
+		return err
+	}
+
 	hashString := playlist.User + playlist.Name
 	hashVal := hash(hashString)
 	playlist.Hash = hashVal
@@ -117,7 +146,7 @@ func AddSmartPlaylist(playlist SmartPlaylist) {
 
 	// Check if playlist already exists
 	exists := SmartPlaylist{}
-	err := c.Find(bson.M{"hash": hashVal}).One(&exists)
+	err = c.Find(bson.M{"hash": hashVal}).One(&exists)
 	if err == nil {
 		// It already exists, delete it
 		c.Remove(bson.M{"hash": hashVal})
@@ -127,26 +156,36 @@ func AddSmartPlaylist(playlist SmartPlaylist) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	disconnect()
+	disconnect(session)
 	log.Println("Smart playlist added")
+	return err
 }
 
 // GetAllSmartPlaylists returns all smart playlists in the DB
 func GetAllSmartPlaylists() ([]SmartPlaylist, error) {
-	connect()
+	session, err := connect()
+	if err != nil {
+		return nil, err
+	}
 	c := session.DB(os.Getenv("MLAB_DB")).C("smartplaylists")
 	// Query One
 	result := []SmartPlaylist{}
-	err := c.Find(bson.M{}).All(&result)
-	disconnect()
+	err = c.Find(bson.M{}).All(&result)
+	if err != nil {
+		return nil, err
+	}
+	disconnect(session)
 	return result, err
 }
 
 // Test the database connection
-func Test() {
-	connect()
+func Test() error {
+	session, err := connect()
+	if err != nil {
+		return err
+	}
 	c := session.DB("spm-test").C("test")
-	err := c.Insert(&test{"Ale", "+55 53 8116 9639"},
+	err = c.Insert(&test{"Ale", "+55 53 8116 9639"},
 		&test{"Cla", "+55 53 8402 8510"})
 	if err != nil {
 		log.Fatal(err)
@@ -159,21 +198,19 @@ func Test() {
 	}
 
 	fmt.Println("Phone:", result.Phone)
-	disconnect()
+	disconnect(session)
+	return err
 }
 
-func connect() *mgo.Session {
-	var err error
-	session, err = mgo.Dial(os.Getenv("MLAB_LOGIN"))
-	if err != nil {
-		panic(err)
+func connect() (*mgo.Session, error) {
+	session, err := mgo.Dial(os.Getenv("MLAB_LOGIN"))
+	if err == nil {
+		session.SetMode(mgo.Monotonic, true)
 	}
-	// Optional. Switch the session to a monotonic behavior.
-	session.SetMode(mgo.Monotonic, true)
-	return session
+	return session, err
 }
 
-func disconnect() {
+func disconnect(session *mgo.Session) {
 	session.Close()
 }
 

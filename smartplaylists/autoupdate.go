@@ -1,7 +1,6 @@
 package smartplaylists
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -11,17 +10,21 @@ import (
 var ticker *time.Ticker
 var quit chan struct{}
 
-func updateSmartPlaylists() {
-	log.Println("Begin updating smart playlists")
+// UpdateSmartPlaylists is public so I can test it
+func UpdateSmartPlaylists() {
+	start := time.Now()
 	allSmartPlaylists, err := db.GetAllSmartPlaylists()
 	if err != nil {
-		fmt.Println(err)
+		log.Println("Error getting smart playlists:", err)
+		return
 	}
 
 	for _, playlist := range allSmartPlaylists {
 		executeSmartPlaylist(playlist)
 	}
-	log.Println("End updating smart playlists")
+	elapsed := time.Since(start)
+	playlists := len(allSmartPlaylists)
+	log.Printf("Updated %v smart playlists in %s...", playlists, elapsed)
 }
 
 // Start updating all smart playlists every period (in minutes)
@@ -32,7 +35,7 @@ func Start(period int) {
 		for {
 			select {
 			case <-ticker.C:
-				updateSmartPlaylists()
+				UpdateSmartPlaylists()
 			case <-quit:
 				ticker.Stop()
 				return
